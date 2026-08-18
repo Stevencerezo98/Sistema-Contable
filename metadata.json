@@ -1,0 +1,6 @@
+{
+  "name": "Sistema Contable - Departamento de Comunicaciones",
+  "description": "Sistema de gestión contable, libro diario/mayor, ingresos, egresos, etiquetas, reportes gráficos, biometría, cifrado y exportación PDF/Excel para el departamento de comunicaciones eclesiástico.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
