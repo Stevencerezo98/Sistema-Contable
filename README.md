@@ -49,5 +49,6 @@ Sigue estos pasos para clonar e instalar el proyecto localmente:
 
 ### 1. Clonar el repositorio
 ```bash
-git clone [https://github.com/Stevencerezo98/Sistema-Contable.git](https://github.com/Stevencerezo98/Sistema-Contable.git)
+- git clone [https://github.com/Stevencerezo98/Sistema-Contable.git]
+- git clone(https://github.com/Stevencerezo98/Sistema-Contable.git)
 cd Sistema-Contable
