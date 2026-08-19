@@ -64,6 +64,7 @@ export default function App() {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [viewingVoucherTransaction, setViewingVoucherTransaction] = useState<Transaction | null>(null);
   const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null);
+  const [isClearAllModalOpen, setIsClearAllModalOpen] = useState(false);
 
   // Theme & Notifications
   const [darkMode, setDarkMode] = useState<boolean>(() => {
@@ -356,16 +357,24 @@ export default function App() {
     }
   };
 
-  const handleClearAllData = async () => {
-    if (window.confirm('¿Está seguro de que desea vaciar todos los movimientos contables registrados?')) {
-      try {
-        await StorageService.clearAllData();
-        setTransactions([]);
-        setAuditLogs(AuthService.getAuditLogs());
-        showNotification('Bóveda contable vaciada a cero.', 'info');
-      } catch (err: any) {
-        showNotification('Error al vaciar datos: ' + (err.message || ''), 'error');
-      }
+  const handleClearAllData = () => {
+    if (!perms.canDeleteTransaction) {
+      showNotification('Tu rol no tiene permisos para vaciar la contabilidad.', 'error');
+      return;
+    }
+    setIsClearAllModalOpen(true);
+  };
+
+  const handleConfirmClearAllData = async () => {
+    try {
+      await StorageService.clearAllData();
+      setTransactions([]);
+      setAuditLogs(AuthService.getAuditLogs());
+      showNotification('Bóveda contable vaciada a cero correctamente.', 'info');
+    } catch (err: any) {
+      showNotification('Error al vaciar datos: ' + (err.message || ''), 'error');
+    } finally {
+      setIsClearAllModalOpen(false);
     }
   };
 
@@ -578,9 +587,15 @@ export default function App() {
               {currentView === 'tags' && (
                 <TagsManagerView
                   tags={tags}
+                  categories={categories}
                   transactions={transactions}
                   onSaveTag={handleSaveTag}
                   onDeleteTag={handleDeleteTag}
+                  onSaveCategory={handleSaveCategory}
+                  onDeleteCategory={handleDeleteCategory}
+                  onNavigateToTransactionsWithTag={(tName) => {
+                    setCurrentView('transactions');
+                  }}
                 />
               )}
 
@@ -638,6 +653,30 @@ export default function App() {
         <span>© 2025 Ecclesia Finance • Depto. Comunicaciones | Cifrado Activo</span>
         <span className="hidden sm:inline">Bóveda: AES-256 | Control de Acceso: RBAC Granular</span>
       </footer>
+
+      {/* Delete Transaction Confirm Modal */}
+      <ConfirmModal
+        isOpen={Boolean(transactionToDelete)}
+        title="Anular / Eliminar Registro Contable"
+        message={`¿Confirma la anulación definitiva del registro ${transactionToDelete?.code} ("${transactionToDelete?.description}") por valor de $${transactionToDelete?.amount?.toFixed(2)}?`}
+        confirmText="Sí, Eliminar Registro"
+        cancelText="Cancelar"
+        type="danger"
+        onConfirm={handleConfirmDeleteTransaction}
+        onCancel={() => setTransactionToDelete(null)}
+      />
+
+      {/* Clear All Data Confirm Modal */}
+      <ConfirmModal
+        isOpen={isClearAllModalOpen}
+        title="Vaciar Toda la Bóveda Contable"
+        message="¿Está completamente seguro de que desea vaciar TODOS los movimientos contables registrados? Esta acción eliminará los registros de ingresos y egresos de la base de datos."
+        confirmText="Sí, Vaciar Todo"
+        cancelText="Cancelar"
+        type="danger"
+        onConfirm={handleConfirmClearAllData}
+        onCancel={() => setIsClearAllModalOpen(false)}
+      />
     </div>
   );
 }

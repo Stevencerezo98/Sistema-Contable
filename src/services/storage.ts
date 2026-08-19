@@ -295,9 +295,39 @@ export const DEMO_SAMPLE_TRANSACTIONS: Transaction[] = [
 
 export class StorageService {
   /**
-   * Retrieves decrypted transactions from encrypted local storage
+   * Helper to sync data with the Node.js / aaPanel backend if available
+   */
+  private static async syncServer(path: string, method: string = 'GET', data?: any): Promise<any> {
+    try {
+      const res = await fetch(`/api${path}`, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: data ? JSON.stringify(data) : undefined,
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {
+      // Offline or running in static context
+    }
+    return null;
+  }
+
+  /**
+   * Retrieves decrypted transactions from encrypted local storage or backend server
    */
   public static async getTransactions(): Promise<Transaction[]> {
+    // Try fetching from server first
+    try {
+      const serverTxs = await this.syncServer('/transactions');
+      if (Array.isArray(serverTxs) && serverTxs.length > 0) {
+        await this.saveTransactionsLocalOnly(serverTxs);
+        return serverTxs;
+      }
+    } catch {
+      // fallback
+    }
+
     try {
       const encryptedData = localStorage.getItem(STORAGE_VAULT_KEY);
       if (!encryptedData) {
@@ -315,13 +345,18 @@ export class StorageService {
     }
   }
 
-  /**
-   * Encrypts and saves transactions to local storage
-   */
-  public static async saveTransactions(transactions: Transaction[]): Promise<void> {
+  private static async saveTransactionsLocalOnly(transactions: Transaction[]): Promise<void> {
     const jsonStr = JSON.stringify(transactions);
     const encryptedData = await CryptoService.encrypt(jsonStr);
     localStorage.setItem(STORAGE_VAULT_KEY, encryptedData);
+  }
+
+  /**
+   * Encrypts and saves transactions to local storage and syncs with backend server
+   */
+  public static async saveTransactions(transactions: Transaction[]): Promise<void> {
+    await this.saveTransactionsLocalOnly(transactions);
+    this.syncServer('/state', 'POST', { transactions }).catch(() => {});
   }
 
   /**

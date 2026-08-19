@@ -145,6 +145,8 @@ export interface AuditLogEntry {
     | 'TAG_MANAGE' 
     | 'TAG_UPDATE'
     | 'TAG_DELETE'
+    | 'CATEGORY_UPDATE'
+    | 'CATEGORY_DELETE'
     | 'BUDGET_UPDATE'
     | 'USER_CREATE'
     | 'USER_UPDATE'

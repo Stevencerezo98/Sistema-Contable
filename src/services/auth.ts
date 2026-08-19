@@ -263,6 +263,17 @@ export class AuthService {
 
     localStorage.setItem(USERS_VAULT_KEY, JSON.stringify(updated));
 
+    // Sync to backend if available
+    try {
+      fetch('/api/state', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ users: updated }),
+      }).catch(() => {});
+    } catch {
+      // ignore
+    }
+
     // Update password if provided
     if (password) {
       this.setUserPassword(user.username, password);
@@ -291,6 +302,17 @@ export class AuthService {
 
     const updated = users.filter((u) => u.id !== userId);
     localStorage.setItem(USERS_VAULT_KEY, JSON.stringify(updated));
+
+    try {
+      fetch('/api/state', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ users: updated }),
+      }).catch(() => {});
+    } catch {
+      // ignore
+    }
+
     this.logAudit('SETTINGS_CHANGE', `Usuario eliminado del sistema: ${target.fullName} (${target.username})`, 'ADVERTENCIA');
   }
 
